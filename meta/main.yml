@@ -1,0 +1,12 @@
+galaxy_info:
+  author: leewis
+  description: install v2ray on linux
+
+  license: MIT
+
+  min_ansible_version: 2.9
+
+  galaxy_tags:
+    - v2ray
+
+  dependencies: []

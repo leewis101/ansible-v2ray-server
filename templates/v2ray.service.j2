@@ -1,0 +1,16 @@
+[Unit]
+Description=V2Ray Service
+After=network.target
+Wants=network.target
+
+[Service]
+User={{ v2ray_user }}
+Group={{ v2ray_group }}
+Type=simple
+PIDFile=/run/v2ray.pid
+WorkingDirectory={{ v2ray_install_dir }}
+ExecStart={{ v2ray_install_dir }}/v2ray -config {{ v2ray_config_dir }}/config.json
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

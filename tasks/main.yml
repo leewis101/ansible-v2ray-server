@@ -1,0 +1,105 @@
+---
+- name: Assert usage of systemd as an init system
+  assert:
+    that: ansible_service_mgr == 'systemd'
+    msg: "This role only works with systemd"
+
+- name: Set v2ray_version
+  set_fact:
+    v2ray_version: "{{ lookup('url', 'https://api.github.com/repos/v2ray/v2ray-core/releases/latest') | from_json | json_query('tag_name') }}"
+  when: v2ray_version == 'latest'
+  run_once: true
+
+- name: Set v2ray_binary
+  set_fact:
+    v2ray_binary: "v2ray-linux-{{ (ansible_machine == 'x86_64') | ternary('64', '32') }}.zip"
+
+- name: Set v2ray_sha256sum
+  set_fact:
+    v2ray_sha256sum: "{{ lookup('url', 'https://github.com/v2ray/v2ray-core/releases/download/' + v2ray_version + '/' + v2ray_binary + '.dgst') | regex_replace('.*SHA256= ([a-z0-9]+).*', '\\1') }}"
+  run_once: true
+
+- name: Create the v2ray group
+  group:
+    name: "{{ v2ray_group }}"
+    state: present
+    system: true
+  when: v2ray_group != "root"
+
+- name: Create the v2ray user
+  user:
+    name: "{{ v2ray_user }}"
+    groups: "{{ v2ray_group }}"
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+    home: /
+  when: v2ray_user != "root"
+
+- name: Download v2ray binary
+  become: false
+  get_url:
+    url: "https://github.com/v2ray/v2ray-core/releases/download/{{ v2ray_version }}/{{ v2ray_binary }}"
+    dest: "/tmp/{{ v2ray_binary }}"
+    checksum: "sha256:{{ v2ray_sha256sum }}"
+
+- name: Create unpack directory
+  become: false
+  file:
+    path: "{{ v2ray_unpack_dir }}"
+    state: directory
+
+- name: Unpack v2ray binary
+  become: false
+  unarchive:
+    src: "/tmp/{{ v2ray_binary }}"
+    dest: "{{ v2ray_unpack_dir }}"
+
+- name: Create v2ray directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ v2ray_user }}"
+    group: "{{ v2ray_group }}"
+    mode: 0750
+  with_items:
+    - "{{ v2ray_install_dir }}"
+    - "{{ v2ray_config_dir }}"
+
+- name: Copy v2ray binaries
+  copy:
+    src: "{{ v2ray_unpack_dir }}/{{ item.name }}"
+    dest: "{{ v2ray_install_dir }}"
+    mode: "{{ item.mode }}"
+    owner: "{{ v2ray_user }}"
+    group: "{{ v2ray_group }}"
+    remote_src: yes
+  with_items:
+    - { name: "v2ray", mode: "0755" }
+    - { name: "v2ctl", mode: "0755" }
+    - { name: "geoip.dat", mode: "0644" }
+    - { name: "geosite.dat", mode: "0644" }
+  notify: restart v2ray
+
+- name: Configure v2ray
+  template:
+    src: config.json.j2
+    dest: "{{ v2ray_config_dir }}/config.json"
+    owner: "{{ v2ray_user }}"
+    group: "{{ v2ray_group }}"
+    mode: 0640
+    validate: "{{ v2ray_install_dir }}/v2ray -test -config=%s"
+  notify: restart v2ray
+
+- name: Install v2ray service
+  template:
+    src: v2ray.service.j2
+    dest: /etc/systemd/system/v2ray.service
+
+- name: Start v2ray service
+  systemd:
+    daemon_reload: true
+    name: v2ray
+    enabled: true
+    state: started

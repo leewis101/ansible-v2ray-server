@@ -1,0 +1,7 @@
+---
+- name: restart v2ray
+  become: true
+  systemd:
+    daemon_reload: true
+    name: v2ray
+    state: restarted
