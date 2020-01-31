@@ -21,10 +21,14 @@ Example Playbook
 
 Plase use your own `config.json.j2` before deployment.
 
+```
+$ ansible-galaxy install leewis101.ansible_v2ray_server
+```
+
 ```yaml
 - hosts: all
   roles:
-    - ansible-v2ray-server
+    - leewis101.ansible-v2ray-server
 ```
 
 License
