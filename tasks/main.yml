@@ -6,17 +6,23 @@
 
 - name: Set v2ray_version
   set_fact:
-    v2ray_version: "{{ lookup('url', 'https://api.github.com/repos/v2ray/v2ray-core/releases/latest') | from_json | json_query('tag_name') }}"
+    v2ray_version: "{{ lookup('url',\
+      'https://api.github.com/repos/v2ray/v2ray-core/releases/latest')\
+      | from_json | json_query('tag_name') }}"
   when: v2ray_version == 'latest'
   run_once: true
 
 - name: Set v2ray_binary
   set_fact:
-    v2ray_binary: "v2ray-linux-{{ (ansible_machine == 'x86_64') | ternary('64', '32') }}.zip"
+    v2ray_binary: "v2ray-linux-\
+      {{ (ansible_machine == 'x86_64') | ternary('64', '32') }}.zip"
 
 - name: Set v2ray_sha256sum
   set_fact:
-    v2ray_sha256sum: "{{ lookup('url', 'https://github.com/v2ray/v2ray-core/releases/download/' + v2ray_version + '/' + v2ray_binary + '.dgst') | regex_replace('.*SHA256= ([a-z0-9]+).*', '\\1') }}"
+    v2ray_sha256sum: "{{ lookup('url',\
+      'https://github.com/v2ray/v2ray-core/releases/download/'\
+      + v2ray_version + '/' + v2ray_binary + '.dgst')\
+      | regex_replace('.*SHA256= ([a-z0-9]+).*', '\\1') }}"
   run_once: true
 
 - name: Create the v2ray group
@@ -40,7 +46,8 @@
 - name: Download v2ray binary
   become: false
   get_url:
-    url: "https://github.com/v2ray/v2ray-core/releases/download/{{ v2ray_version }}/{{ v2ray_binary }}"
+    url: "https://github.com/v2ray/v2ray-core/releases/download/\
+      {{ v2ray_version }}/{{ v2ray_binary }}"
     dest: "/tmp/{{ v2ray_binary }}"
     checksum: "sha256:{{ v2ray_sha256sum }}"
 
@@ -74,12 +81,12 @@
     mode: "{{ item.mode }}"
     owner: "{{ v2ray_user }}"
     group: "{{ v2ray_group }}"
-    remote_src: yes
+    remote_src: "yes"
   with_items:
-    - { name: "v2ray", mode: "0755" }
-    - { name: "v2ctl", mode: "0755" }
-    - { name: "geoip.dat", mode: "0644" }
-    - { name: "geosite.dat", mode: "0644" }
+    - {name: "v2ray", mode: "0755"}
+    - {name: "v2ctl", mode: "0755"}
+    - {name: "geoip.dat", mode: "0644"}
+    - {name: "geosite.dat", mode: "0644"}
   notify: restart v2ray
 
 - name: Configure v2ray
