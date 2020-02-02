@@ -62,6 +62,7 @@
   unarchive:
     src: "/tmp/{{ v2ray_binary }}"
     dest: "{{ v2ray_unpack_dir }}"
+    remote_src: yes
 
 - name: Create v2ray directory
   file:
