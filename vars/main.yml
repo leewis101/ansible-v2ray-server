@@ -1,2 +1,6 @@
 ---
-# vars file for ansible-v2ray
+arch_map:
+  i386: "32"
+  x86_64: "64"
+
+v2ray_sha256sum: {}

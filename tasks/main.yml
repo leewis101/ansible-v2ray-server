@@ -12,17 +12,24 @@
   when: v2ray_version == 'latest'
   run_once: true
 
+- name: Set v2ray_arch
+  set_fact:
+    v2ray_arch: "{{ arch_map[ansible_architecture] | default(ansible_architecture) }}"
+
 - name: Set v2ray_binary
   set_fact:
-    v2ray_binary: "v2ray-linux-\
-      {{ (ansible_machine == 'x86_64') | ternary('64', '32') }}.zip"
+    v2ray_binary: "v2ray-linux-{{ v2ray_arch }}.zip"
 
 - name: Set v2ray_sha256sum
   set_fact:
-    v2ray_sha256sum: "{{ lookup('url',\
-      'https://github.com/v2ray/v2ray-core/releases/download/'\
-      + v2ray_version + '/' + v2ray_binary + '.dgst')\
-      | regex_replace('.*SHA256= ([a-z0-9]+).*', '\\1') }}"
+    "v2ray_sha256sum": "{{ v2ray_sha256sum | combine({
+      item: lookup('url',\
+        'https://github.com/v2ray/v2ray-core/releases/download/'\
+        + v2ray_version + '/v2ray-linux-' + item + '.zip.dgst')\
+        | regex_replace('.*SHA256= ([a-z0-9]+).*', '\\1')\
+      })
+    }}"
+  with_list: "{{ groups['all'] | map('extract', hostvars, 'v2ray_arch') | list | unique }}"
   run_once: true
 
 - name: Create the v2ray group
@@ -49,7 +56,7 @@
     url: "https://github.com/v2ray/v2ray-core/releases/download/\
       {{ v2ray_version }}/{{ v2ray_binary }}"
     dest: "/tmp/{{ v2ray_binary }}"
-    checksum: "sha256:{{ v2ray_sha256sum }}"
+    checksum: "sha256:{{ v2ray_sha256sum[v2ray_arch] }}"
 
 - name: Create unpack directory
   become: false
