@@ -64,6 +64,11 @@
     path: "{{ v2ray_unpack_dir }}"
     state: directory
 
+- name: Install unzip
+  package:
+    name: unzip
+    state: present
+
 - name: Unpack v2ray binary
   become: false
   unarchive:
