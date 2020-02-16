@@ -11,6 +11,18 @@ PIDFile=/run/v2ray.pid
 WorkingDirectory={{ v2ray_install_dir }}
 ExecStart={{ v2ray_install_dir }}/v2ray -config {{ v2ray_config_dir }}/config.json
 Restart=on-failure
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+NoNewPrivileges=true
+SystemCallFilter=~@clock @cpu-emulation @debug @keyring @module @mount @obsolete @privileged @raw-io
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 
 [Install]
 WantedBy=multi-user.target
