@@ -28,7 +28,7 @@ $ ansible-galaxy install leewis101.ansible_v2ray_server
 ```yaml
 - hosts: all
   roles:
-    - leewis101.ansible-v2ray-server
+    - leewis101.ansible_v2ray_server
 ```
 
 License
