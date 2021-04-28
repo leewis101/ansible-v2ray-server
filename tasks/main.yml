@@ -11,14 +11,17 @@
       | from_json | json_query('tag_name') }}"
   when: v2ray_version == 'latest'
   run_once: true
+  tags: [update]
 
 - name: Set v2ray_arch
   set_fact:
     v2ray_arch: "{{ arch_map[ansible_architecture] | default(ansible_architecture) }}"
+  tags: [update]
 
 - name: Set v2ray_binary
   set_fact:
     v2ray_binary: "v2ray-linux-{{ v2ray_arch }}.zip"
+  tags: [update]
 
 - name: Set v2ray_sha256sum
   set_fact:
@@ -31,6 +34,7 @@
     }}"
   with_list: "{{ groups['all'] | map('extract', hostvars, 'v2ray_arch') | list | unique }}"
   run_once: true
+  tags: [update]
 
 - name: Create the v2ray group
   group:
@@ -57,12 +61,14 @@
       {{ v2ray_version }}/{{ v2ray_binary }}"
     dest: "/tmp/{{ v2ray_binary }}"
     checksum: "sha256:{{ v2ray_sha256sum[v2ray_arch] }}"
+  tags: [update]
 
 - name: Create unpack directory
   become: false
   file:
     path: "{{ v2ray_unpack_dir }}"
     state: directory
+  tags: [update]
 
 - name: Install unzip
   package:
@@ -75,6 +81,7 @@
     src: "/tmp/{{ v2ray_binary }}"
     dest: "{{ v2ray_unpack_dir }}"
     remote_src: yes
+  tags: [update]
 
 - name: Create v2ray directory
   file:
@@ -101,6 +108,7 @@
     - {name: "geoip.dat", mode: "0644"}
     - {name: "geosite.dat", mode: "0644"}
   notify: restart v2ray
+  tags: [update]
 
 - name: Configure v2ray
   template:
@@ -111,6 +119,7 @@
     mode: 0640
     validate: "{{ v2ray_install_dir }}/v2ray -test -config=%s"
   notify: restart v2ray
+  tags: [config]
 
 - name: Install v2ray service
   template:
