@@ -46,7 +46,7 @@
 - name: Create the v2ray user
   user:
     name: "{{ v2ray_user }}"
-    groups: "{{ v2ray_group }}"
+    group: "{{ v2ray_group }}"
     append: true
     shell: /usr/sbin/nologin
     system: true
